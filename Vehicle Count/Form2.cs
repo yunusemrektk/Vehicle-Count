@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.Structure;
@@ -13,13 +8,10 @@ using AForge.Vision.Motion;
 using Emgu.CV.CvEnum;
 using System.Threading;
 using Emgu.CV.Util;
-using OpenTK.Graphics.OpenGL;
 using Emgu.CV.VideoSurveillance;
 using Emgu.CV.Cvb;
 using Newtonsoft.Json;
 using System.IO;
-using System.Reflection;
-using Emgu.CV.UI;
 
 namespace Vehicle_Count
 {
@@ -30,13 +22,19 @@ namespace Vehicle_Count
         Capture cap = new Capture();
         Mat frame = new Mat();
         private bool captureOn;
+        private bool inBox = false;
         Mat grayframe = new Mat();
         int count = 0;
         int IDCount = 0;
+        int carcount = 0;
+        int clickcount = 1;
+
+        List<String> carid = new List<string>();
         MotionDetector detector;
         CascadeClassifier carCl = new CascadeClassifier("C:\\Users\\YUNUS EMRE\\Desktop\\cars.xml");
         private Image<Bgr, byte> currentframe = null;
-     
+        Point px, py;
+        
         BackgroundSubtractorMOG2 sub = new BackgroundSubtractorMOG2();
         CvBlobDetector detect = new CvBlobDetector();
         CvBlobs blobs = new CvBlobs();
@@ -65,7 +63,9 @@ namespace Vehicle_Count
 
         private void ProcessFrameMP4(object sender, EventArgs e)
         {
-             DetectionwithSubtracterMP4();
+             
+            DetectionwithSubtracterMP4();
+
         }
 
         private void rtsp_play()
@@ -102,7 +102,7 @@ namespace Vehicle_Count
                 sub.Apply(currentframe, mask);
                 detect.Detect(mask.ToImage<Gray, byte>(), blobs);                
                 blobs.FilterByArea(10, int.MaxValue);
-                tracks.Update(blobs, 100.0, 1, 10);
+                tracks.Update(blobs, 20.0, 1, 10);
                 
                 Image<Bgr, byte> result = new Image<Bgr, byte>(currentframe.Size);
                 using (Image<Gray, Byte> blobMask = detect.DrawBlobsMask(blobs))
@@ -119,8 +119,7 @@ namespace Vehicle_Count
                        int cy = Convert.ToInt32(pair.Value.Centroid.Y);
 
                         CvBlob b = blobs[pair.Value.BlobLabel];
-                        Bgr color = detect.MeanColor(b, frame.ToImage<Bgr, Byte>());
-                        // result.Draw(pair.Key.ToString(), pair.Value.BoundingBox.Location, FontFace.HersheySimplex, 0.5, color);
+                        Bgr color = detect.MeanColor(b, frame.ToImage<Bgr, Byte>());                        
                         currentframe.Draw(pair.Value.BoundingBox, new Bgr(0, 0, 255), 1);
                         //Point[] contour = b.GetContour();
                         // result.Draw(contour, new Bgr(0, 0, 255), 1);
@@ -161,17 +160,33 @@ namespace Vehicle_Count
         }
         private void DetectionwithSubtracterMP4()
         {
+           px = new Point(px1, px2);
+           py = new Point(py1, py2);
 
             if (cap != null)
             {
-                Point px = new Point(px1, px2);
-                Point py = new Point(py1, py2);
+                
                 cap.Retrieve(frame, 0);
                 currentframe = frame.ToImage<Bgr, byte>();
                 
 
                 Mat mask = new Mat();
                 sub.Apply(currentframe, mask);
+
+                Mat kernelOp = new Mat();
+                Mat kernelCl = new Mat();
+                Mat kernelEl = new Mat();
+                Mat Dilate = new Mat();
+                kernelOp = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(3, 3), new Point(-1, -1));
+                kernelCl = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(11, 11), new Point(-1, -1));
+                var element = CvInvoke.GetStructuringElement(ElementShape.Cross, new Size(3, 3), new Point(-1, -1));
+
+                CvInvoke.GaussianBlur(mask, mask, new Size(13, 13), 1.5);
+                CvInvoke.MorphologyEx(mask,mask,MorphOp.Open,kernelOp,new Point(-1,-1),1,BorderType.Default,new MCvScalar());
+                CvInvoke.MorphologyEx(mask, mask, MorphOp.Close, kernelCl, new Point(-1, -1), 1, BorderType.Default, new MCvScalar());
+                CvInvoke.Dilate(mask, mask, element, new Point(-1, -1),1, BorderType.Reflect, default(MCvScalar));
+                CvInvoke.Threshold(mask,mask,127,255,ThresholdType.Binary);
+
                 detect.Detect(mask.ToImage<Gray, byte>(), blobs);
                 blobs.FilterByArea(500, 20000);
                 tracks.Update(blobs, 20.0, 1, 10);
@@ -182,6 +197,7 @@ namespace Vehicle_Count
                     frame.CopyTo(result, blobMask);
                 }
                 CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 0, 255), 2);
+
                 foreach (KeyValuePair<uint, CvTrack> pair in tracks)
                 {
                     if (pair.Value.Inactive == 0) //only draw the active tracks.
@@ -192,40 +208,61 @@ namespace Vehicle_Count
 
                         CvBlob b = blobs[pair.Value.BlobLabel];
                         Bgr color = detect.MeanColor(b, frame.ToImage<Bgr, Byte>());
-                        // result.Draw(pair.Key.ToString(), pair.Value.BoundingBox.Location, FontFace.HersheySimplex, 0.5, color);
+                        result.Draw(pair.Key.ToString(), pair.Value.BoundingBox.Location, FontFace.HersheySimplex, 0.5, color);
                         currentframe.Draw(pair.Value.BoundingBox, new Bgr(0, 0, 255), 1);
-                        //Point[] contour = b.GetContour();
-                        // result.Draw(contour, new Bgr(0, 0, 255), 1);
+                        Point[] contour = b.GetContour();
+                        //result.Draw(contour, new Bgr(0, 0, 255), 1);
 
                         Point center = new Point(cx, cy);
                         CvInvoke.Circle(currentframe, center, 1, new MCvScalar(255, 0, 0), 2);
-                        if (center.Y <= px.Y + 2 && center.Y > py.Y - 2 && center.X <= py.X && center.X > px.X)
+                        
+                        if (center.Y <= px.Y + 15 && center.Y > py.Y - 15 && center.X <= py.X && center.X > px.X)
                         {
-                            count++;
-                            IDCount++;
+                            if (pair.Key.ToString() != "")
+                            {
+                                if (!carid.Contains(pair.Key.ToString()))
+                                {
+                                    carid.Add(pair.Key.ToString());
+                                    if (carid.Count==20)
+                                    {
+                                        carid.Clear();
+                                    }
+
+                                    carcount++;
+                                    
+                                }
+
+                            }
+
+
+
                             CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 255, 0), 2);
 
-                            //Json Logger
-                            Logs log = new Logs()
-                            {
-                                Date = DateTime.Now.ToString("dd-mm-yyyy-hh-mm-ss"),
-                                Id = IDCount
-                            };
-                            string strResultJson = JsonConvert.SerializeObject(log);
-                            File.AppendAllText(@"log.json", strResultJson + Environment.NewLine);
+                            /* //Json Logger
+                               Logs log = new Logs()
+                               {
+                                   Date = DateTime.Now.ToString("dd-mm-yyyy-hh-mm-ss"),
+                                   Id = IDCount
+                               };
+                               string strResultJson = JsonConvert.SerializeObject(log);
+                               File.AppendAllText(@"log.json", strResultJson + Environment.NewLine);
+
+                              */
 
 
                         }
+
                     }
+
                 }
-
-
-                CvInvoke.PutText(currentframe, "Count :" + count.ToString(), new Point(10, 25), FontFace.HersheySimplex, 1, new MCvScalar(255, 0, 0), 2, LineType.AntiAlias);
+                
+                
+                CvInvoke.PutText(currentframe, "Count :" + carcount.ToString(), new Point(10, 25), FontFace.HersheySimplex, 1, new MCvScalar(255, 0, 0), 2, LineType.AntiAlias);
                 //Frame Rate
-                 double framerate = cap.GetCaptureProperty(CapProp.Fps);
+                double framerate = cap.GetCaptureProperty(CapProp.Fps);
                 Thread.Sleep((int)(1000.0 / framerate));
                 pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBox.Image = result.Bitmap;
+                pictureBox.Image = mask.Bitmap;
 
                 Thread th = new Thread(currentframepictureBox);
                 th.Start();
@@ -271,6 +308,7 @@ namespace Vehicle_Count
             th.Start();
 
         }
+     
         private void DetectionwithCascade()
         {
 
@@ -317,14 +355,7 @@ namespace Vehicle_Count
             }
 
         }
-      
-        
-        private void button3_Click(object sender, EventArgs e)
-        {
-            SetLocation();
-            mp4_play();
-            
-        }
+
         void SetLocation()
         {
             px1 = Convert.ToInt32(textBoxx1.Text);
@@ -332,24 +363,44 @@ namespace Vehicle_Count
             py1 = Convert.ToInt32(textBoxy1.Text);
             py2 = Convert.ToInt32(textBoxy2.Text);
         }
-        private void button4_Click(object sender, EventArgs e)
+        
+        private void CapStop()
         {
             cap.Stop();
-            count = 0;
+            carcount = 0;
+
+        }
+
+        void LoadBoxes()
+        {
+            Config cfg = new Config();
+
+            textBoxx1.Text = Convert.ToString(100);
+            textBoxx2.Text = Convert.ToString(200);
+            textBoxy1.Text = Convert.ToString(550);
+            textBoxy2.Text = Convert.ToString(200);
+
+            textBox1.Text = cfg.RtspUrl;
+            textBox2.Text = cfg.Mp4Path;
 
             
+        }
+        private void button3_Click(object sender, EventArgs e)
+        {
+            SetLocation();
+            mp4_play();
+            
+        }
+          
+        private void button4_Click(object sender, EventArgs e)
+        {
+            CapStop();
+                            
         }
 
         private void Form2_Load(object sender, EventArgs e)
         {
-            textBoxx1.Text = Convert.ToString(150);
-            textBoxx2.Text = Convert.ToString(200);
-            textBoxy1.Text = Convert.ToString(500);
-            textBoxy2.Text = Convert.ToString(200);
-
-            textBox1.Text = "rtsp://170.93.143.139/rtplive/470011e600ef003a004ee33696235daa";
-            textBox2.Text = "C:\\Users\\YUNUS EMRE\\Desktop\\video3.mp4";
-
+            LoadBoxes();
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -363,10 +414,34 @@ namespace Vehicle_Count
         }
         void Reset()
         {
-            count = 0;
+            carcount = 0;
             pictureBox1.Image = null;
             pictureBox.Image = null;
         }
+    
+        private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (clickcount == 1)
+            {
+                textBoxx1.Text = e.X.ToString();
+                textBoxx2.Text = e.Y.ToString();
+                clickcount++;
+                px = new Point(e.X, e.Y);
+                
+            }
+            else if (clickcount == 2)
+            {
+                textBoxy1.Text = e.X.ToString();
+                textBoxy2.Text = e.Y.ToString();
+                clickcount--;
+                py = new Point(e.X, e.Y);
+            }
+           
+                        
+         
+        }
+
+
         void currentframepicBoxRtsp()
         {
             pictureBox1.Image = currentframe.Bitmap;
@@ -375,7 +450,7 @@ namespace Vehicle_Count
 
         void currentframepictureBox()
         {
-            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            //pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.Image = currentframe.Bitmap;
 
         }
