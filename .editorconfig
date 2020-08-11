@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# IDE0051: Kullanılmayan özel üyeleri kaldır
+dotnet_diagnostic.IDE0051.severity = none
