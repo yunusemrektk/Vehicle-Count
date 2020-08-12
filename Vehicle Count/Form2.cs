@@ -21,11 +21,9 @@ namespace Vehicle_Count
         #region
         Capture cap = new Capture();
         Mat frame = new Mat();
-        private bool captureOn;
-        private bool inBox = false;
         Mat grayframe = new Mat();
-        int count = 0;
-        int IDCount = 0;
+
+ 
         int carcount = 0;
         int clickcount = 1;
 
@@ -89,19 +87,35 @@ namespace Vehicle_Count
         }
         private void DetectionwithSubtracterRTSP()
         {
+            Point px = new Point(px1, px2);
+            Point py = new Point(py1, py2);
 
             if (cap != null)
             {
-                Point px = new Point(px1, px2);
-                Point py = new Point(py1, py2);
+                
                 cap.Retrieve(frame, 0);
                 currentframe = frame.ToImage<Bgr, byte>();
 
                 
                 Mat mask = new Mat();
                 sub.Apply(currentframe, mask);
+
+                Mat kernelOp = new Mat();
+                Mat kernelCl = new Mat();
+                Mat kernelEl = new Mat();
+                Mat Dilate = new Mat();
+                kernelOp = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(3, 3), new Point(-1, -1));
+                kernelCl = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(11, 11), new Point(-1, -1));
+                var element = CvInvoke.GetStructuringElement(ElementShape.Cross, new Size(3, 3), new Point(-1, -1));
+
+                CvInvoke.GaussianBlur(mask, mask, new Size(13, 13), 1.5);
+                CvInvoke.MorphologyEx(mask, mask, MorphOp.Open, kernelOp, new Point(-1, -1), 1, BorderType.Default, new MCvScalar());
+                CvInvoke.MorphologyEx(mask, mask, MorphOp.Close, kernelCl, new Point(-1, -1), 1, BorderType.Default, new MCvScalar());
+                CvInvoke.Dilate(mask, mask, element, new Point(-1, -1), 1, BorderType.Reflect, default(MCvScalar));
+                CvInvoke.Threshold(mask, mask, 127, 255, ThresholdType.Binary);
+
                 detect.Detect(mask.ToImage<Gray, byte>(), blobs);                
-                blobs.FilterByArea(10, int.MaxValue);
+                blobs.FilterByArea(100, int.MaxValue);
                 tracks.Update(blobs, 20.0, 1, 10);
                 
                 Image<Bgr, byte> result = new Image<Bgr, byte>(currentframe.Size);
@@ -126,12 +140,26 @@ namespace Vehicle_Count
                         
                         Point center = new Point(cx, cy);
                         CvInvoke.Circle(currentframe, center , 1, new MCvScalar(255, 0, 0), 2);
-                        if (center.Y <= px.Y + 2 && center.Y > py.Y - 1 && center.X <=py.X && center.X > px.X)
+                        if (center.Y <= px.Y + 10 && center.Y > py.Y - 10 && center.X <=py.X && center.X > px.X)
                         {
-                            count++;
-                            IDCount++;
+
+                            if (pair.Key.ToString() != "")
+                            {
+                                if (!carid.Contains(pair.Key.ToString()))
+                                {
+                                    carid.Add(pair.Key.ToString());
+                                    if (carid.Count == 20)
+                                    {
+                                        carid.Clear();
+                                    }
+
+                                    carcount++;
+
+                                }
+
+                            }
                             CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 255, 0), 2);
-                           
+                           /*
                             //Json Logger
                             Logs log = new Logs()
                             {
@@ -140,22 +168,18 @@ namespace Vehicle_Count
                             };
                             string strResultJson = JsonConvert.SerializeObject(log);
                             File.AppendAllText(@"log.json", strResultJson+Environment.NewLine);
-
+                           */
 
                         }
                     }
                 }
 
 
-                CvInvoke.PutText(currentframe, "Count :" + count.ToString(), new Point(10, 25),FontFace.HersheySimplex, 1,new MCvScalar(255, 0,0), 2, LineType.AntiAlias);
-                //Frame Rate
-                //double framerate = cap.GetCaptureProperty(CapProp.Fps);
-                //Thread.Sleep((int)(1000.0 / framerate));
-               // pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBox.Image = result.Bitmap;
+                CvInvoke.PutText(currentframe, "Count :" + carcount.ToString(), new Point(10, 25),FontFace.HersheySimplex, 1,new MCvScalar(255, 0,0), 2, LineType.AntiAlias);
+                pictureBox1.Image = currentframe.Bitmap;
              
-                Thread th = new Thread(currentframepicBoxRtsp);
-                th.Start();
+               // Thread th = new Thread(currentframepicBoxRtsp);
+               // th.Start();
             }
         }
         private void DetectionwithSubtracterMP4()
@@ -262,7 +286,7 @@ namespace Vehicle_Count
                 double framerate = cap.GetCaptureProperty(CapProp.Fps);
                 Thread.Sleep((int)(1000.0 / framerate));
                 pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBox.Image = mask.Bitmap;
+                pictureBox.Image = result.Bitmap;
 
                 Thread th = new Thread(currentframepictureBox);
                 th.Start();
@@ -337,9 +361,9 @@ namespace Vehicle_Count
                         if (center.Y <= px.Y  && center.Y >= py.Y )
                         {
                             
-                            count++;
+
                             CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 255, 0), 3);
-                            Console.WriteLine($"count : {count}");
+
                         }
                     }
                 }
@@ -462,11 +486,6 @@ namespace Vehicle_Count
             
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            cap.Stop();
-            count = 0;
-        }
     }
    
 }
