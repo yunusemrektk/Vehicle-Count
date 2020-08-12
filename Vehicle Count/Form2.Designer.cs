@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pictureBox = new System.Windows.Forms.PictureBox();
             this.button1 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
@@ -47,18 +46,8 @@
             this.label6 = new System.Windows.Forms.Label();
             this.button5 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
-            // 
-            // pictureBox
-            // 
-            this.pictureBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pictureBox.Location = new System.Drawing.Point(1061, 12);
-            this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(784, 359);
-            this.pictureBox.TabIndex = 0;
-            this.pictureBox.TabStop = false;
             // 
             // button1
             // 
@@ -120,7 +109,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(1101, 396);
+            this.label2.Location = new System.Drawing.Point(1090, 21);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(79, 17);
             this.label2.TabIndex = 9;
@@ -129,7 +118,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(1101, 480);
+            this.label3.Location = new System.Drawing.Point(1090, 105);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(79, 17);
             this.label3.TabIndex = 11;
@@ -137,21 +126,21 @@
             // 
             // textBoxx1
             // 
-            this.textBoxx1.Location = new System.Drawing.Point(1104, 430);
+            this.textBoxx1.Location = new System.Drawing.Point(1093, 55);
             this.textBoxx1.Name = "textBoxx1";
             this.textBoxx1.Size = new System.Drawing.Size(154, 22);
             this.textBoxx1.TabIndex = 12;
             // 
             // textBoxy1
             // 
-            this.textBoxy1.Location = new System.Drawing.Point(1104, 515);
+            this.textBoxy1.Location = new System.Drawing.Point(1093, 140);
             this.textBoxy1.Name = "textBoxy1";
             this.textBoxy1.Size = new System.Drawing.Size(154, 22);
             this.textBoxy1.TabIndex = 13;
             // 
             // textBoxx2
             // 
-            this.textBoxx2.Location = new System.Drawing.Point(1292, 430);
+            this.textBoxx2.Location = new System.Drawing.Point(1281, 55);
             this.textBoxx2.Name = "textBoxx2";
             this.textBoxx2.Size = new System.Drawing.Size(154, 22);
             this.textBoxx2.TabIndex = 15;
@@ -159,7 +148,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(1289, 396);
+            this.label4.Location = new System.Drawing.Point(1278, 21);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(83, 17);
             this.label4.TabIndex = 14;
@@ -167,7 +156,7 @@
             // 
             // textBoxy2
             // 
-            this.textBoxy2.Location = new System.Drawing.Point(1292, 515);
+            this.textBoxy2.Location = new System.Drawing.Point(1281, 140);
             this.textBoxy2.Name = "textBoxy2";
             this.textBoxy2.Size = new System.Drawing.Size(154, 22);
             this.textBoxy2.TabIndex = 17;
@@ -175,7 +164,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(1289, 480);
+            this.label5.Location = new System.Drawing.Point(1278, 105);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(83, 17);
             this.label5.TabIndex = 16;
@@ -200,7 +189,7 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(1104, 556);
+            this.button5.Location = new System.Drawing.Point(1093, 181);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(154, 32);
             this.button5.TabIndex = 20;
@@ -222,7 +211,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1892, 908);
+            this.ClientSize = new System.Drawing.Size(1454, 892);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.label6);
@@ -241,12 +230,10 @@
             this.Controls.Add(this.button4);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button1);
-            this.Controls.Add(this.pictureBox);
             this.Name = "Form2";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Form2";
             this.Load += new System.EventHandler(this.Form2_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -254,8 +241,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.PictureBox pictureBox;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button4;

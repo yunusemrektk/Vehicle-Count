@@ -240,7 +240,7 @@ namespace Vehicle_Count
                         Point center = new Point(cx, cy);
                         CvInvoke.Circle(currentframe, center, 1, new MCvScalar(255, 0, 0), 2);
                         
-                        if (center.Y <= px.Y + 15 && center.Y > py.Y - 15 && center.X <= py.X && center.X > px.X)
+                        if (center.Y <= px.Y + 10 && center.Y > py.Y - 10 && center.X <= py.X && center.X > px.X)
                         {
                             if (pair.Key.ToString() != "")
                             {
@@ -285,14 +285,15 @@ namespace Vehicle_Count
                 //Frame Rate
                 double framerate = cap.GetCaptureProperty(CapProp.Fps);
                 Thread.Sleep((int)(1000.0 / framerate));
-                pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBox.Image = result.Bitmap;
+                
+                //pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+                pictureBox1.Image = currentframe.Bitmap;
 
-                Thread th = new Thread(currentframepictureBox);
-                th.Start();
+             //   Thread th = new Thread(currentframepictureBox);
+              //  th.Start();
             }
         }
-        private void DetectionwithMotion()
+      /*  private void DetectionwithMotion()
         {
 
 
@@ -379,7 +380,7 @@ namespace Vehicle_Count
             }
 
         }
-
+      */
         void SetLocation()
         {
             px1 = Convert.ToInt32(textBoxx1.Text);
@@ -392,7 +393,7 @@ namespace Vehicle_Count
         {
             cap.Stop();
             carcount = 0;
-
+            carid.Clear();
         }
 
         void LoadBoxes()
@@ -440,7 +441,6 @@ namespace Vehicle_Count
         {
             carcount = 0;
             pictureBox1.Image = null;
-            pictureBox.Image = null;
         }
     
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
