@@ -425,7 +425,7 @@ namespace Vehicle_Count
             writer = new VideoFileWriter();
             writer.Open(dialog.FileName, frame.Width,frame.Height);
             isRecording = true;
-
+            buttonRecStart.Text = "Recording...";
         }
 
         void StopRecording()
@@ -433,6 +433,7 @@ namespace Vehicle_Count
             isRecording = false;
             writer.Close();
             writer.Dispose();
+            buttonRecStart.Text = "Start Rec";
         }
 
         void SetLocation()
