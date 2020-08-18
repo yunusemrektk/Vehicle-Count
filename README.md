@@ -5,9 +5,7 @@ Video Link : https://youtu.be/5olwLIX6JG4
 -Visiual Studio  
 -EmguCV 3.1.0.1  
 -Newtonsoft.Json 12.0.3 (Not necessary)  
--AForge 2.2.5  
--AForge.Video 2.2.5  
-
+-Accord.Video.FFmpeg
 # How to Run ?  
 
 -There are 2 TextBoxes which are directed to video source.  
