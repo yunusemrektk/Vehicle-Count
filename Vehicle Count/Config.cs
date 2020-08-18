@@ -10,7 +10,7 @@ namespace Vehicle_Count
     {
         public string RtspUrl = "rtsp://170.93.143.139/rtplive/470011e600ef003a004ee33696235daa";
         public string Mp4Path = "C:\\Users\\YUNUS EMRE\\Desktop\\video3.mp4";
-
+        public string PhotoSavePath = @"C:\Users\YUNUS EMRE\source\repos\Face Recognition\Face Recognition\Images";
 
     }
 }
