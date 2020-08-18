@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.Structure;
-using AForge.Vision.Motion;
 using Emgu.CV.CvEnum;
 using System.Threading;
 using Emgu.CV.VideoSurveillance;
@@ -28,7 +27,6 @@ namespace Vehicle_Count
         int clickcount = 1;
 
         List<String> carid = new List<string>();
-        MotionDetector detector;
         private Image<Bgr, byte> currentframe = null;
         Point px, py;
         
@@ -45,7 +43,6 @@ namespace Vehicle_Count
         public Form2()
         {
             InitializeComponent();
-            detector = new MotionDetector(new TwoFramesDifferenceDetector(), new MotionAreaHighlighting());
 
         }
 
