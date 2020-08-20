@@ -9,7 +9,10 @@ using System.Threading;
 using Emgu.CV.VideoSurveillance;
 using Emgu.CV.Cvb;
 using Accord.Video.FFMPEG;
-
+using Newtonsoft.Json;
+using System.IO;
+using System.Net.Mail;
+using System.Runtime.Remoting.Messaging;
 
 namespace Vehicle_Count
 {
@@ -25,7 +28,9 @@ namespace Vehicle_Count
         int px1, px2, py1, py2;
         int carcount = 0;
         int clickcount = 1;
-
+        int countBrd = 50;
+        string Image_Name=null;
+        bool firstCount = false;
         List<String> carid = new List<string>();
         private Image<Bgr, byte> currentframe = null;
         Point px, py;
@@ -34,11 +39,13 @@ namespace Vehicle_Count
         CvBlobDetector detect = new CvBlobDetector();
         CvBlobs blobs = new CvBlobs();
         CvTracks tracks = new CvTracks();
-        Config cfg = new Config();       
+        Config cfg = new Config();
+        Thread sendMail;
 
         private bool isRecording = false;
         private VideoFileWriter writer;
         private DateTime? firstFrameTime;
+        
         #endregion
         public Form2()
         {
@@ -129,26 +136,29 @@ namespace Vehicle_Count
                                     }
 
                                     carcount++;
-                                    /* Image_Name= cfg.PhotoSavePath + @"\" + "Car" + DateTime.Now.ToString("dd-mm-yyyy-hh-mm-ss") + ".jpg";
-                                     currentframe.Save(Image_Name);*/
+
+                                    if (carcount != countBrd+1 && carcount !=countBrd+2 && carcount != countBrd + 3 && carcount != countBrd + 4 && carcount != countBrd + 5)
+                                    {
+                                        //Json Logger
+                                        Logs log = new Logs()
+                                        {
+                                            Date = DateTime.Now.ToString(),
+                                            Id = carcount
+                                        };
+                                        string strResultJson = JsonConvert.SerializeObject(log);
+                                        File.AppendAllText(cfg.LogSavePath + @"\log.json", strResultJson + Environment.NewLine);
+                                    }
+                                    
+
+
+                                    
+                                                                           
+
                                 }
 
                             }
 
-
-
                             CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 255, 0), 2);
-
-                            /* //Json Logger
-                               Logs log = new Logs()
-                               {
-                                   Date = DateTime.Now.ToString("dd-mm-yyyy-hh-mm-ss"),
-                                   Id = IDCount
-                               };
-                               string strResultJson = JsonConvert.SerializeObject(log);
-                               File.AppendAllText(@"log.json", strResultJson + Environment.NewLine);
-
-                              */
 
 
                         }
@@ -158,10 +168,19 @@ namespace Vehicle_Count
                 }
 
 
-                CvInvoke.PutText(currentframe, "Count :" + carcount.ToString(), new Point(10, 25), FontFace.HersheySimplex, 1, new MCvScalar(255, 0, 0), 2, LineType.AntiAlias);
+                CvInvoke.PutText(currentframe, "Count :" + carcount.ToString(), new Point(10, 25), FontFace.HersheySimplex, 1, new MCvScalar(255, 0,255), 2, LineType.AntiAlias);
                 //Frame Rate
                 double framerate = cap.GetCaptureProperty(CapProp.Fps);
                 Thread.Sleep((int)(1000.0 / framerate));
+                if (firstCount == false && carcount == countBrd)
+                {
+                    Image_Name = cfg.PhotoSavePath + @"\" + "Car" + DateTime.Now.ToString("dd-mm-yyyy-hh-mm-ss") + ".jpg";
+                    currentframe.Save(Image_Name);
+                    sendMail = new Thread(SendMail);
+                    sendMail.Start();
+                    firstCount = true;
+
+                }
 
 
 
@@ -185,8 +204,6 @@ namespace Vehicle_Count
                 //pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
                 pictureBox1.Image = currentframe.Bitmap;
 
-                //   Thread th = new Thread(currentframepictureBox);
-                //  th.Start();
             }
 
         }
@@ -274,21 +291,16 @@ namespace Vehicle_Count
                                     }
 
                                     carcount++;
+                                    Thread logTh = new Thread(SendMail);
+                                    logTh.Start();
 
                                 }
 
                             }
                             CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 255, 0), 2);
-                            /*
-                             //Json Logger
-                             Logs log = new Logs()
-                             {
-                                 Date = DateTime.Now.ToString("dd-mm-yyyy-hh-mm-ss"),
-                                 Id = IDCount
-                             };
-                             string strResultJson = JsonConvert.SerializeObject(log);
-                             File.AppendAllText(@"log.json", strResultJson+Environment.NewLine);
-                            */
+                            
+
+                            
 
                         }
                     }
@@ -311,8 +323,16 @@ namespace Vehicle_Count
 
                 }
 
-                CvInvoke.PutText(currentframe, "Count :" + carcount.ToString(), new Point(10, 25), FontFace.HersheySimplex, 1, new MCvScalar(255, 0, 0), 2, LineType.AntiAlias);
+                CvInvoke.PutText(currentframe, "Count :" + carcount.ToString(), new Point(10, 25), FontFace.HersheySimplex, 1, new MCvScalar(0, 255, 255), 2, LineType.AntiAlias);
                 pictureBox1.Image = currentframe.Bitmap;
+                
+                if (firstCount == false && carcount == 15)
+                {
+                    Image_Name = cfg.PhotoSavePath + @"\" + "Car" + DateTime.Now.ToString("dd-mm-yyyy-hh-mm-ss") + ".jpg";
+                    currentframe.Save(Image_Name);
+
+                    firstCount = true;
+                }
 
                 // Thread th = new Thread(currentframepicBoxRtsp);
                 // th.Start();
@@ -320,96 +340,36 @@ namespace Vehicle_Count
 
         }
        
-
-        /*  private void DetectionwithMotion()
+        
+        void SaveLogs()
         {
 
-
-            if (cap != null)
-            {
-                Point px = new Point(50, 250);
-                Point py = new Point(500, 250);
-                cap.Retrieve(frame, 0);
-                currentframe = frame.ToImage<Bgr, byte>();
-
-
-                CvInvoke.CvtColor(currentframe, grayframe, ColorConversion.Bgr2Gray);
-                CvInvoke.EqualizeHist(grayframe, grayframe);
-                CvInvoke.GaussianBlur(grayframe, grayframe, new Size(13, 13), 1.5);
-                CvInvoke.Threshold(grayframe, grayframe, 10, 255, ThresholdType.BinaryInv);
-
-                CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 0, 255), 3);
-
-
-
-                VectorOfVectorOfPoint cnt = new VectorOfVectorOfPoint();
-                Mat hier = new Mat();
-                CvInvoke.FindContours(grayframe, cnt, hier, RetrType.External, ChainApproxMethod.ChainApproxTc89L1);
-                CvInvoke.DrawContours(currentframe, cnt, -1, new MCvScalar(0, 0, 255));
-
-                
-            }
-
-          //  detector.ProcessFrame(currentframe.Bitmap);
-            
-            //Frame Rate
-            double framerate = cap.GetCaptureProperty(CapProp.Fps);
-            Thread.Sleep((int)(1000.0 / framerate));
-            
-            pictureBox1.Image = currentframe.Bitmap;
-            Thread th = new Thread(currentframepictureBox);
-            th.Start();
-
         }
-     
-        private void DetectionwithCascade()
+        void SendMail()
         {
 
-            if (cap != null)
-            {
-                Point px = new Point(px1, px2);
-                Point py = new Point(py1, py2);
-                cap.Retrieve(frame, 0);
-                currentframe = frame.ToImage<Bgr, byte>().Resize(frame.Width,frame.Height,Inter.Cubic);
+            MailMessage message = new MailMessage();
+            message.To.Add(cfg.MailAddressTo);
+            message.From = new MailAddress("ynsemrektk@hotmail.com");
+            message.Subject = "Vehicle Counter Automation";
+            message.Body = "Araba sayımız 50'ye ulaştığında bir ekran görüntüsü ile log'lar ektedir.";
+            System.Net.Mail.Attachment att;
+            System.Net.Mail.Attachment att2;
+            att2 = new Attachment(cfg.LogSavePath + @"\log.json");
+            att = new Attachment(Image_Name);
+            message.Attachments.Add(att);
+            message.Attachments.Add(att2);
 
-                CvInvoke.CvtColor(currentframe, grayframe, ColorConversion.Bgr2Gray);
-                CvInvoke.EqualizeHist(grayframe, grayframe);
-                CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 0, 255), 3);
-                Rectangle[] cars = carCl.DetectMultiScale(grayframe, 1.1, 6, Size.Empty, Size.Empty);
+            SmtpClient client = new SmtpClient();
+            client.Credentials = new System.Net.NetworkCredential("ynsemrektk@hotmail.com", "Cimbom1905.");
+            client.Port = 587;
+            client.Host = "smtp.live.com";
+            client.EnableSsl = true;
+            client.Send(message);
 
-                if (cars.Length > 0)
-                {
-                    foreach (var car in cars)
-                    {
-                        int cx = car.Width / 2;
-                        int cy = car.Height / 2;
-
-                        CvInvoke.Rectangle(currentframe, car, new Bgr(Color.Red).MCvScalar, 2);
-                        Point center = new Point(car.X + cx, car.Y + cy);
-                        CvInvoke.Circle(currentframe, center, 1, new MCvScalar(255, 0, 0), 3);
-                        if (center.Y <= px.Y  && center.Y >= py.Y )
-                        {
-                            
-
-                            CvInvoke.Line(currentframe, px, py, new MCvScalar(0, 255, 0), 3);
-
-                        }
-                    }
-                }
-                //Frame Rate
-                //   double framerate = cap.GetCaptureProperty(CapProp.Fps);
-                // Thread.Sleep((int)(1000.0 / framerate));
-               // pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBox1.Image = currentframe.Bitmap;
-                
-               // Thread th = new Thread(currentframepictureBox);
-               // th.Start();
-
-            }
+            message.Dispose();
 
         }
-      */
-
         void StartRecording()
         {
             var dialog = new SaveFileDialog();
